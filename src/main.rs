@@ -114,15 +114,26 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
 
 fn find_next_word(line: &String, pos: usize, big: bool) -> usize {
     let nonbreak = ['_']; // TODO: could be incomplete list
+    let mut flag = false;
+
     for (i, ch) in line.chars().skip(pos).enumerate() {
+        if flag {
+            if ch.is_alphanumeric() || nonbreak.contains(&ch) {
+                return i + pos + 1;
+            }
+        }
         if big {
             if ch == ' ' {
-                return i + pos;
+                flag = true;
+                continue;
+                // return i + pos;
             }
         } else {
             // TODO: need to also check for thing like '_'
             if !(ch.is_alphanumeric() || nonbreak.contains(&ch)) {
-                return i;
+                flag = true;
+                continue;
+                // return i;
             }
         }
     }
