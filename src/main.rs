@@ -112,6 +112,33 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
     return transforms;
 }
 
+fn find_prev_word(line: &String, pos: usize, big: bool) -> usize {
+    // TODO: could avoid duplication
+    let nonbreak = ['_']; // TODO: could be incomplete list
+    let mut flag = false;
+
+    for (i, ch) in line.chars().rev().skip(line.len() - pos).enumerate() {
+        if flag {
+            if ch.is_alphanumeric() || nonbreak.contains(&ch) {
+                return pos - i + 1;
+            }
+        }
+        if big {
+            if ch == ' ' {
+                flag = true;
+                continue;
+            }
+        } else {
+            // TODO: need to also check for thing like '_'
+            if !(ch.is_alphanumeric() || nonbreak.contains(&ch)) {
+                flag = true;
+                continue;
+            }
+        }
+    }
+    return 0;
+}
+
 fn find_next_word(line: &String, pos: usize, big: bool, e: bool) -> usize {
     let nonbreak = ['_']; // TODO: could be incomplete list
     let mut flag = false;
@@ -167,7 +194,8 @@ fn transform(transforms: &Vec<Transform>, line: String) -> String {
                 Go::BigWord => pos = find_next_word(&line, pos, true, false),
                 Go::WordEnd => pos = find_next_word(&line, pos, false, true),
                 Go::BigWordEnd => pos = find_next_word(&line, pos, true, true),
-                _ => {}
+                Go::Back => pos = find_prev_word(&line, pos, false),
+                Go::BigBack => pos = find_prev_word(&line, pos, true),
             },
         }
     }
