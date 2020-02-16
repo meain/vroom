@@ -41,7 +41,7 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
     let mut mode: Mode = Mode::Normal;
     for item in transformation.chars() {
         state = state + &item.to_string();
-        println!("state: {:?}", state);
+        // println!("state: {:?}", state);
 
         match mode {
             Mode::Insert => {
@@ -81,6 +81,12 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
                     transforms.push(Transform::Goto(Go::Right));
                     mode = Mode::Insert;
                     state = "".to_string();
+                } else if state == "l".to_string() {
+                    transforms.push(Transform::Goto(Go::Right));
+                    state = "".to_string();
+                } else if state == "h".to_string() {
+                    transforms.push(Transform::Goto(Go::Left));
+                    state = "".to_string();
                 } else if state == "w".to_string() {
                     transforms.push(Transform::Goto(Go::Word));
                     state = "".to_string();
@@ -107,12 +113,15 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
 }
 
 fn find_next_word(line: &String, pos: usize, big: bool) -> usize {
+    let nonbreak = ['_']; // TODO: could be incomplete list
     for (i, ch) in line.chars().skip(pos).enumerate() {
-        if big && ch == ' ' {
-            return i + pos;
+        if big {
+            if ch == ' ' {
+                return i + pos;
+            }
         } else {
             // TODO: need to also check for thing like '_'
-            if !ch.is_alphanumeric() {
+            if !(ch.is_alphanumeric() || nonbreak.contains(&ch)) {
                 return i;
             }
         }
