@@ -17,10 +17,10 @@ enum Go {
     End,
     Word,
     BigWord,
-    // WordEnd,
-    // BigWordEnd,
-    // Back,
-    // BigBack,
+    WordEnd,
+    BigWordEnd,
+    Back,
+    BigBack,
 }
 
 #[derive(Debug, Clone)]
@@ -93,18 +93,18 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
                 } else if state == "W".to_string() {
                     transforms.push(Transform::Goto(Go::BigWord));
                     state = "".to_string();
-                    // } else if state == "e".to_string() {
-                    //     transforms.push(Transform::Goto(Go::WordEnd));
-                    //     state = "".to_string();
-                    // } else if state == "E".to_string() {
-                    //     transforms.push(Transform::Goto(Go::BigWordEnd));
-                    //     state = "".to_string();
-                    // } else if state == "b".to_string() {
-                    //     transforms.push(Transform::Goto(Go::Back));
-                    //     state = "".to_string();
-                    // } else if state == "B".to_string() {
-                    //     transforms.push(Transform::Goto(Go::BigBack));
-                    //     state = "".to_string();
+                } else if state == "e".to_string() {
+                    transforms.push(Transform::Goto(Go::WordEnd));
+                    state = "".to_string();
+                } else if state == "E".to_string() {
+                    transforms.push(Transform::Goto(Go::BigWordEnd));
+                    state = "".to_string();
+                } else if state == "b".to_string() {
+                    transforms.push(Transform::Goto(Go::Back));
+                    state = "".to_string();
+                } else if state == "B".to_string() {
+                    transforms.push(Transform::Goto(Go::BigBack));
+                    state = "".to_string();
                 }
             }
         }
@@ -112,7 +112,7 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
     return transforms;
 }
 
-fn find_next_word(line: &String, pos: usize, big: bool) -> usize {
+fn find_next_word(line: &String, pos: usize, big: bool, e: bool) -> usize {
     let nonbreak = ['_']; // TODO: could be incomplete list
     let mut flag = false;
 
@@ -124,16 +124,20 @@ fn find_next_word(line: &String, pos: usize, big: bool) -> usize {
         }
         if big {
             if ch == ' ' {
+                if e {
+                    return i + pos;
+                }
                 flag = true;
                 continue;
-                // return i + pos;
             }
         } else {
             // TODO: need to also check for thing like '_'
             if !(ch.is_alphanumeric() || nonbreak.contains(&ch)) {
+                if e {
+                    return i + pos;
+                }
                 flag = true;
                 continue;
-                // return i;
             }
         }
     }
@@ -159,8 +163,11 @@ fn transform(transforms: &Vec<Transform>, line: String) -> String {
                         pos -= 1;
                     }
                 }
-                Go::Word => pos = find_next_word(&line, pos, false),
-                Go::BigWord => pos = find_next_word(&line, pos, true),
+                Go::Word => pos = find_next_word(&line, pos, false, false),
+                Go::BigWord => pos = find_next_word(&line, pos, true, false),
+                Go::WordEnd => pos = find_next_word(&line, pos, false, true),
+                Go::BigWordEnd => pos = find_next_word(&line, pos, true, true),
+                _ => {}
             },
         }
     }
