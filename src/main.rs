@@ -15,6 +15,12 @@ enum Go {
     Left,
     Start,
     End,
+    Word,
+    BigWord,
+    // WordEnd,
+    // BigWordEnd,
+    // Back,
+    // BigBack,
 }
 
 #[derive(Debug, Clone)]
@@ -36,8 +42,8 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
     let mut mode: Mode = Mode::Normal;
     for item in transformation.chars() {
         state = state + &item.to_string();
+        println!("state: {:?}", state);
 
-        // println!("state: {:?}", state);
         match mode {
             Mode::Insert => {
                 if state.chars().next().unwrap() != '<' {
@@ -72,6 +78,33 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
                     transforms.push(Transform::SwitchTo(Mode::Insert));
                     mode = Mode::Insert;
                     state = "".to_string();
+                } else if state == "i".to_string() {
+                    transforms.push(Transform::SwitchTo(Mode::Insert));
+                    mode = Mode::Insert;
+                    state = "".to_string();
+                } else if state == "a".to_string() {
+                    transforms.push(Transform::Goto(Go::Right));
+                    transforms.push(Transform::SwitchTo(Mode::Insert));
+                    mode = Mode::Insert;
+                    state = "".to_string();
+                } else if state == "w".to_string() {
+                    transforms.push(Transform::Goto(Go::Word));
+                    state = "".to_string();
+                } else if state == "W".to_string() {
+                    transforms.push(Transform::Goto(Go::BigWord));
+                    state = "".to_string();
+                    // } else if state == "e".to_string() {
+                    //     transforms.push(Transform::Goto(Go::WordEnd));
+                    //     state = "".to_string();
+                    // } else if state == "E".to_string() {
+                    //     transforms.push(Transform::Goto(Go::BigWordEnd));
+                    //     state = "".to_string();
+                    // } else if state == "b".to_string() {
+                    //     transforms.push(Transform::Goto(Go::Back));
+                    //     state = "".to_string();
+                    // } else if state == "B".to_string() {
+                    //     transforms.push(Transform::Goto(Go::BigBack));
+                    //     state = "".to_string();
                 }
             }
         }
@@ -79,8 +112,22 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
     return transforms;
 }
 
+fn find_next_word(line: &String, pos: usize, big: bool) -> usize {
+    for (i, ch) in line.chars().skip(pos).enumerate() {
+        if big && ch == ' ' {
+            return i + pos;
+        } else {
+            // TODO: need to also check for thing like '_'
+            if !ch.is_alphanumeric() {
+                return i;
+            }
+        }
+    }
+    return line.len();
+}
+
 fn transform(transforms: &Vec<Transform>, line: String) -> String {
-    let mut pos = 0;
+    let mut pos: usize = 0;
     let mut modified = line.clone();
 
     for transform in transforms {
@@ -92,6 +139,14 @@ fn transform(transforms: &Vec<Transform>, line: String) -> String {
             Transform::Goto(p) => match p {
                 Go::Start => pos = 0,
                 Go::End => pos = modified.len(),
+                Go::Right => pos += 1,
+                Go::Left => {
+                    if pos > 0 {
+                        pos -= 1;
+                    }
+                }
+                Go::Word => pos = find_next_word(&line, pos, false),
+                Go::BigWord => pos = find_next_word(&line, pos, true),
             },
             Transform::SwitchTo(_) => {}
         }
