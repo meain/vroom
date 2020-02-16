@@ -2,6 +2,8 @@ use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+// TODO: ^, g_, c, r, gu, gU, visual mode, copy, paste, search
+
 #[derive(Debug, Clone)]
 enum Mode {
     Normal,
@@ -85,6 +87,13 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
                         }
                         state = "".to_string()
                     }
+                } else if state == "$".to_string() {
+                    transforms.push(Transform::Goto(Go::End));
+                    transforms.push(Transform::Goto(Go::Left));
+                    state = "".to_string();
+                } else if state == "0".to_string() {
+                    transforms.push(Transform::Goto(Go::Start));
+                    state = "".to_string();
                 } else if state == "A".to_string() {
                     transforms.push(Transform::Goto(Go::End));
                     mode = Mode::Insert;
@@ -165,22 +174,28 @@ fn find_next_word(line: &String, pos: usize, big: bool, e: bool) -> usize {
     for (i, ch) in line.chars().skip(pos).enumerate() {
         if flag {
             if ch.is_alphanumeric() || nonbreak.contains(&ch) {
-                return i + pos + 1;
+                return i + pos;
             }
         }
         if big {
             if ch == ' ' {
                 if e {
-                    return i + pos;
+                    return i + pos - 1;
                 }
                 flag = true;
                 continue;
             }
         } else {
             // TODO: need to also check for thing like '_'
-            if !(ch.is_alphanumeric() || nonbreak.contains(&ch)) {
-                if e {
+            if !ch.is_alphanumeric() && !nonbreak.contains(&ch) {
+                if ch != ' ' {
+                    if e {
+                        return i + pos - 1;
+                    }
                     return i + pos;
+                }
+                if e {
+                    return i + pos - 1;
                 }
                 flag = true;
                 continue;
@@ -267,5 +282,62 @@ fn main() {
         let line = line.unwrap();
         let modified = transform(&transforms, line);
         println!("{}", modified);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{parse_transforms, transform};
+
+    #[test]
+    fn check_replacements() {
+        let checks = [
+            ["hello world", "aomer h", "homer hello world"],
+            ["hello world", "A again", "hello world again"],
+            ["hello world", "A ag<esc>Imo ", "mo hello world ag"],
+            ["hello world", "icruel ", "cruel hello world"],
+            ["hello world", "Icruel ", "cruel hello world"],
+            ["hello world", "llllIcruel ", "cruel hello world"],
+            // w
+            ["hello world", "wicruel ", "hello cruel world"],
+            ["hello-ish world", "wicruel", "hellocruel-ish world"],
+            ["hello_ish world", "wicruel ", "hello_ish cruel world"],
+            ["hello world", "Wicruel ", "hello cruel world"],
+            ["hello-ish world", "Wicruel ", "hello-ish cruel world"],
+            ["hello_ish world", "Wicruel ", "hello_ish cruel world"],
+            // e
+            ["hello world", "eill", "hellllo world"],
+            ["hello-ish world", "eill", "hellllo-ish world"],
+            ["hello_ish world", "eill", "hello_isllh world"],
+            ["hello world", "Eill", "hellllo world"],
+            ["hello-ish world", "Eill", "hello-isllh world"],
+            ["hello_ish world", "Eill", "hello_isllh world"],
+            // b
+            ["hello world", "$bill", "hello llworld"],
+            ["hello world-ish", "$bill", "hello world-llish"],
+            ["hello world_ish", "$bill", "hello llworld_ish"],
+            ["hello world", "$Bill", "hello llworld"],
+            ["hello world-ish", "$Bill", "hello llworld-ish"],
+            ["hello world_ish", "$Bill", "hello llworld_ish"],
+            // hjkl
+            ["hello world", "$ill", "hello worllld"],
+            ["hello world", "ll0ill", "llhello world"],
+            ["hello world", "llil", "helllo world"],
+            ["hello world", "hia", "ahello world"],
+            ["hello world", "hhhhhhhia", "ahello world"],
+            ["hello world", "hhllllhia", "helalo world"],
+            // f and t
+            ["hello world", "fwai", "hello wiorld"],
+            ["hello world", "$Fwai", "hello wiorld"],
+            ["hello world", "twai", "hello iworld"],
+            ["hello world", "$Twai", "hello woirld"],
+        ];
+
+        for check in checks.iter() {
+            let line = check[0].to_string();
+            let transforms = parse_transforms(&check[1].to_string());
+            let modified = transform(&transforms, line);
+            assert_eq!(modified, check[2])
+        }
     }
 }
