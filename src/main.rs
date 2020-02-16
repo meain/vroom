@@ -6,14 +6,13 @@ use std::io::{BufRead, BufReader};
 enum Mode {
     Normal,
     Insert,
-    // Command,
+    // Command,  // need to add support for this
 }
-
 
 #[derive(Debug, Clone)]
 enum Go {
-    // Right,
-    // Left,
+    Right,
+    Left,
     Start,
     End,
 }
@@ -27,7 +26,7 @@ struct Cursor {
 #[derive(Debug, Clone)]
 enum Transform {
     Goto(Go),
-    SwitchTo(Mode),  // probably remove this
+    SwitchTo(Mode), // probably remove this
     Insert(String),
 }
 
@@ -48,6 +47,18 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
                     state = "".to_string();
                     transforms.push(Transform::SwitchTo(Mode::Normal));
                     mode = Mode::Normal;
+                } else {
+                    if state.len() > 5 {
+                        transforms.push(Transform::Insert(state.to_string()));
+                        state = "".to_owned();
+                    } else {
+                        // TODO: optimize this
+                        let eqstate: String = "<esc>".chars().take(state.len()).collect();
+                        if state != eqstate {
+                            transforms.push(Transform::Insert(state.to_string()));
+                            state = "".to_owned();
+                        }
+                    }
                 }
             }
             Mode::Normal => {
@@ -69,29 +80,22 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
 }
 
 fn transform(transforms: &Vec<Transform>, line: String) -> String {
-    // println!("transforms: {:?}", transforms);
-    // println!("line: {:?}", line);
-
     let mut pos = 0;
     let mut modified = line.clone();
 
     for transform in transforms {
-        // println!("transform: {:?}", transform);
         match transform {
             Transform::Insert(text) => {
                 modified.insert_str(pos, text);
-                pos += 1;
-            },
-            Transform::Goto(p) => {
-                match p {
-                    Go::Start => pos = 0,
-                    Go::End => pos = modified.len(),
-                }
+                pos += text.len();
+            }
+            Transform::Goto(p) => match p {
+                Go::Start => pos = 0,
+                Go::End => pos = modified.len(),
             },
             Transform::SwitchTo(_) => {}
         }
     }
-    // println!("modified: {:?}", modified);
     modified
 }
 
@@ -107,6 +111,7 @@ fn main() {
     let reader = BufReader::new(file);
 
     let transforms = parse_transforms(&transformation);
+    println!("transforms: {:?}", transforms);
     for (_, line) in reader.lines().enumerate() {
         let line = line.unwrap();
         let modified = transform(&transforms, line);
