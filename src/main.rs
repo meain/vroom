@@ -21,6 +21,10 @@ enum Go {
     BigWordEnd,
     Back,
     BigBack,
+    Find(char),
+    FindBack(char),
+    Till(char),
+    TillBack(char),
 }
 
 #[derive(Debug, Clone)]
@@ -66,7 +70,22 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
                 }
             }
             Mode::Normal => {
-                if state == "A".to_string() {
+                let first_char = state.chars().next().unwrap();
+                if ['f', 'F', 't', 'T'].contains(&first_char) {
+                    if state.len() == 1 {
+                        continue;
+                    } else {
+                        let second_char = state.chars().nth(1).unwrap();
+                        match first_char {
+                            'f' => transforms.push(Transform::Goto(Go::Find(second_char))),
+                            'F' => transforms.push(Transform::Goto(Go::FindBack(second_char))),
+                            't' => transforms.push(Transform::Goto(Go::Till(second_char))),
+                            'T' => transforms.push(Transform::Goto(Go::TillBack(second_char))),
+                            _ => {}
+                        }
+                        state = "".to_string()
+                    }
+                } else if state == "A".to_string() {
                     transforms.push(Transform::Goto(Go::End));
                     mode = Mode::Insert;
                     state = "".to_string();
@@ -171,6 +190,31 @@ fn find_next_word(line: &String, pos: usize, big: bool, e: bool) -> usize {
     return line.len();
 }
 
+fn find_char(line: &String, item: &char, pos: usize, t: bool) -> usize {
+    for (i, ch) in line.chars().skip(pos).enumerate() {
+        if &ch == item {
+            if t {
+                return i + pos - 1;
+            } else {
+                return i + pos;
+            }
+        }
+    }
+    return pos;
+}
+fn find_char_rev(line: &String, item: &char, pos: usize, t: bool) -> usize {
+    for (i, ch) in line.chars().rev().skip(line.len() - pos).enumerate() {
+        if &ch == item {
+            if t {
+                return pos - i;
+            } else {
+                return pos - i - 1;
+            }
+        }
+    }
+    return pos;
+}
+
 fn transform(transforms: &Vec<Transform>, line: String) -> String {
     let mut pos: usize = 0;
     let mut modified = line.clone();
@@ -196,6 +240,10 @@ fn transform(transforms: &Vec<Transform>, line: String) -> String {
                 Go::BigWordEnd => pos = find_next_word(&line, pos, true, true),
                 Go::Back => pos = find_prev_word(&line, pos, false),
                 Go::BigBack => pos = find_prev_word(&line, pos, true),
+                Go::Find(c) => pos = find_char(&line, c, pos, false),
+                Go::FindBack(c) => pos = find_char_rev(&line, c, pos, false),
+                Go::Till(c) => pos = find_char(&line, c, pos, true),
+                Go::TillBack(c) => pos = find_char_rev(&line, c, pos, true),
             },
         }
     }
