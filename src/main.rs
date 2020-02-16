@@ -32,7 +32,6 @@ struct Cursor {
 #[derive(Debug, Clone)]
 enum Transform {
     Goto(Go),
-    SwitchTo(Mode), // probably remove this
     Insert(String),
 }
 
@@ -51,7 +50,6 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
                     state = "".to_owned();
                 } else if state == "<esc>".to_string() {
                     state = "".to_string();
-                    transforms.push(Transform::SwitchTo(Mode::Normal));
                     mode = Mode::Normal;
                 } else {
                     if state.len() > 5 {
@@ -70,21 +68,17 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
             Mode::Normal => {
                 if state == "A".to_string() {
                     transforms.push(Transform::Goto(Go::End));
-                    transforms.push(Transform::SwitchTo(Mode::Insert));
                     mode = Mode::Insert;
                     state = "".to_string();
                 } else if state == "I".to_string() {
                     transforms.push(Transform::Goto(Go::Start));
-                    transforms.push(Transform::SwitchTo(Mode::Insert));
                     mode = Mode::Insert;
                     state = "".to_string();
                 } else if state == "i".to_string() {
-                    transforms.push(Transform::SwitchTo(Mode::Insert));
                     mode = Mode::Insert;
                     state = "".to_string();
                 } else if state == "a".to_string() {
                     transforms.push(Transform::Goto(Go::Right));
-                    transforms.push(Transform::SwitchTo(Mode::Insert));
                     mode = Mode::Insert;
                     state = "".to_string();
                 } else if state == "w".to_string() {
@@ -148,7 +142,6 @@ fn transform(transforms: &Vec<Transform>, line: String) -> String {
                 Go::Word => pos = find_next_word(&line, pos, false),
                 Go::BigWord => pos = find_next_word(&line, pos, true),
             },
-            Transform::SwitchTo(_) => {}
         }
     }
     modified
