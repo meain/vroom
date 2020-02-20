@@ -2,7 +2,8 @@ use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-// TODO: ^, g_, c, r, gu, gU, visual mode, copy, paste, search
+// TODO: ^, g_, c, r, gu, gU, ;(repeat), visual mode, copy, paste, search, number repeat
+// TODO: maybe add multiline support
 
 #[derive(Debug, Clone)]
 enum Mode {
