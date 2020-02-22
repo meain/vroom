@@ -2,7 +2,7 @@ use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-// TODO: ^, g_, c, r, gu, gU, ;(repeat), visual mode, copy, paste, search, number repeat
+// TODO: g_, c, r, gu, gU, ;(repeat), visual mode, copy, paste, search, number repeat
 // TODO: maybe add multiline support
 
 #[derive(Debug, Clone)]
@@ -28,6 +28,7 @@ enum Go {
     FindBack(char),
     Till(char),
     TillBack(char),
+    FirstNonSpace,
 }
 
 #[derive(Debug, Clone)]
@@ -94,6 +95,9 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
                     state = "".to_string();
                 } else if state == "0".to_string() {
                     transforms.push(Transform::Goto(Go::Start));
+                    state = "".to_string();
+                } else if state == "^".to_string() {
+                    transforms.push(Transform::Goto(Go::FirstNonSpace));
                     state = "".to_string();
                 } else if state == "A".to_string() {
                     transforms.push(Transform::Goto(Go::End));
@@ -231,6 +235,15 @@ fn find_char_rev(line: &String, item: &char, pos: usize, t: bool) -> usize {
     return pos;
 }
 
+fn find_first_non_whitespace(line: &String) -> usize {
+    for (i, ch) in line.chars().enumerate() {
+        if ch != ' ' {
+            return i;
+        }
+    }
+    return 0;
+}
+
 fn transform(transforms: &Vec<Transform>, line: String) -> String {
     let mut pos: usize = 0;
     let mut modified = line.clone();
@@ -260,6 +273,7 @@ fn transform(transforms: &Vec<Transform>, line: String) -> String {
                 Go::FindBack(c) => pos = find_char_rev(&line, c, pos, false),
                 Go::Till(c) => pos = find_char(&line, c, pos, true),
                 Go::TillBack(c) => pos = find_char_rev(&line, c, pos, true),
+                Go::FirstNonSpace => pos = find_first_non_whitespace(&line),
             },
         }
     }
@@ -332,6 +346,10 @@ mod tests {
             ["hello world", "$Fwai", "hello wiorld"],
             ["hello world", "twai", "hello iworld"],
             ["hello world", "$Twai", "hello woirld"],
+            // ^
+            ["hello world", "^ia", "ahello world"],
+            ["    hello world", "^ia", "    ahello world"],
+            ["    hello world", "0ia", "a    hello world"],
         ];
 
         for check in checks.iter() {
