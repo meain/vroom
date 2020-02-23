@@ -1,11 +1,21 @@
 use super::utils;
 use super::parser::{Go, Transform};
+#[allow(dead_code)]
+fn debug(line: &str, pos: usize, transform: &Transform) {
+    let max_line_length = 20; // change 20 to max line length
+    let mut ft = format!("{:?}", transform);
+    ft = format!("{: >1$}", ft, max_line_length - line.len() + ft.len());
+
+    println!("{}¬ {} [{}]", line, ft, pos);
+    println!("{:-<1$}^", "", pos);
+}
 
 pub fn transform(transforms: &Vec<Transform>, line: String) -> String {
     let mut pos: usize = 0;
     let mut modified = line.clone();
 
     for transform in transforms {
+        debug(&modified, pos, &transform);
         match transform {
             Transform::Insert(text) => {
                 modified.insert_str(pos, text);
