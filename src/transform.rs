@@ -28,9 +28,15 @@ pub fn transform(transforms: &Vec<Transform>, line: String) -> String {
                 modified.insert_str(pos, text);
                 pos += text.len();
             }
+            Transform::InsertRight(text) => {
+                pos += 1;
+                modified.insert_str(pos, text);
+                pos += text.len();
+                pos -= 1;
+            }
             Transform::Goto(p) => match p {
                 Go::Start => pos = 0,
-                Go::End => pos = modified.len(),
+                Go::End => pos = modified.len() - 1,
                 Go::Right => {
                     if modified.len() - 1 > pos {
                         pos += 1;
@@ -51,12 +57,14 @@ pub fn transform(transforms: &Vec<Transform>, line: String) -> String {
                 Go::FindBack(c) => pos = utils::find_char_rev(&modified, c, pos, false),
                 Go::Till(c) => pos = utils::find_char(&modified, c, pos, true),
                 Go::TillBack(c) => pos = utils::find_char_rev(&modified, c, pos, true),
-                Go::FirstNonSpace => pos = utils::find_first_non_whitespace(&modified),
                 Go::ReplaceChar(c) => {
                     modified.insert_str(pos, &c.to_string());
                     modified.remove(pos + 1);
                 }
+                Go::FirstNonSpace => pos = utils::find_first_non_whitespace(&modified),
+                Go::LastNonSpace => pos = utils::find_last_non_whitespace(&modified),
             },
+            Transform::None => {}
         }
     }
     modified

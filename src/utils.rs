@@ -60,7 +60,7 @@ pub fn find_next_word(line: &String, pos: usize, big: bool, e: bool) -> usize {
             }
         }
     }
-    return line.len();
+    return line.len() - 1;
 }
 
 pub fn find_char(line: &String, item: &char, pos: usize, t: bool) -> usize {
@@ -95,4 +95,13 @@ pub fn find_first_non_whitespace(line: &String) -> usize {
         }
     }
     return 0;
+}
+
+pub fn find_last_non_whitespace(line: &String) -> usize {
+    for (i, ch) in line.chars().rev().enumerate() {
+        if ch != ' ' {
+            return line.len() - i - 1;
+        }
+    }
+    return line.len() - 1;
 }

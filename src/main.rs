@@ -3,7 +3,7 @@ use std::io;
 use std::io::{BufRead, BufReader};
 use std::{env, process};
 
-// TODO: g_, c, R, gu, gU, ;(repeat), visual mode, copy, paste, search, number repeat
+// TODO: c, R, gu, gU, ;(repeat), visual mode, copy, paste, search, number repeat
 // TODO: <c-a> and <c-x> to increment numbers, repeat with .
 // TODO: maybe add multiline support
 
@@ -110,9 +110,13 @@ mod tests {
             // buggy
             ["lemon", "wa pie", "lemon pie"],
             ["lemon", "A pie<esc>biand ", "lemon and pie"],
+            // g_
+            ["hello", "g_a elo", "hello elo"],
+            ["hello   ", "g_a elo", "hello elo   "],
         ];
 
         for check in checks.iter() {
+            println!("{} => {} => {}", check[0], check[1], check[2]);
             let line = check[0].to_string();
             let transforms = parser::parse_transforms(&check[1].to_string());
             let modified = transform::transform(&transforms, line);

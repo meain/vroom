@@ -1,8 +1,8 @@
 #[derive(Debug, Clone)]
 pub enum Mode {
     Normal,
-    Insert,
-    // Command,  // need to add support for this
+    Insert(bool), // true => right (for a and A)
+                  // Command,  // need to add support for this
 }
 
 #[derive(Debug, Clone)]
@@ -21,14 +21,24 @@ pub enum Go {
     FindBack(char),
     Till(char),
     TillBack(char),
-    FirstNonSpace,
     ReplaceChar(char),
+    FirstNonSpace,
+    LastNonSpace,
 }
 
 #[derive(Debug, Clone)]
 pub enum Transform {
     Goto(Go),
     Insert(String),
+    InsertRight(String),
+    None,
+}
+
+fn get_g_tranformations(item: char) -> Transform {
+    match item {
+        '_' => return Transform::Goto(Go::LastNonSpace),
+        _ => return Transform::None,
+    }
 }
 
 pub fn parse_transforms(transformation: &String) -> Vec<Transform> {
@@ -39,30 +49,21 @@ pub fn parse_transforms(transformation: &String) -> Vec<Transform> {
         state = state + &item.to_string();
 
         match mode {
-            Mode::Insert => {
-                if state.chars().next().unwrap() != '<' {
-                    transforms.push(Transform::Insert(state.to_string()));
-                    state = "".to_owned();
-                } else if state == "<esc>".to_string() {
-                    state = "".to_string();
-                    mode = Mode::Normal;
-                } else {
-                    if state.len() > 5 {
-                        transforms.push(Transform::Insert(state.to_string()));
-                        state = "".to_owned();
+            Mode::Insert(p) => {
+                if state.ends_with("<esc>") {
+                    if p {
+                        transforms
+                            .push(Transform::InsertRight(state[..state.len() - 5].to_string()));
+                        state = "".to_string();
+                        mode = Mode::Normal;
                     } else {
-                        // TODO: optimize this
-                        let eqstate: String = "<esc>".chars().take(state.len()).collect();
-                        if state != eqstate {
-                            transforms.push(Transform::Insert(state.to_string()));
-                            state = "".to_owned();
-                        }
+                        transforms.push(Transform::Insert(state[..state.len() - 5].to_string()));
                     }
                 }
             }
             Mode::Normal => {
                 let first_char = state.chars().next().unwrap();
-                if ['f', 'F', 't', 'T', 'r'].contains(&first_char) {
+                if ['f', 'F', 't', 'T', 'r', 'g'].contains(&first_char) {
                     if state.len() == 1 {
                         continue;
                     } else {
@@ -73,6 +74,7 @@ pub fn parse_transforms(transformation: &String) -> Vec<Transform> {
                             't' => transforms.push(Transform::Goto(Go::Till(second_char))),
                             'T' => transforms.push(Transform::Goto(Go::TillBack(second_char))),
                             'r' => transforms.push(Transform::Goto(Go::ReplaceChar(second_char))),
+                            'g' => transforms.push(get_g_tranformations(second_char)),
                             _ => {}
                         }
                         state = "".to_string()
@@ -89,18 +91,17 @@ pub fn parse_transforms(transformation: &String) -> Vec<Transform> {
                     state = "".to_string();
                 } else if state == "A".to_string() {
                     transforms.push(Transform::Goto(Go::End));
-                    mode = Mode::Insert;
+                    mode = Mode::Insert(true);
                     state = "".to_string();
                 } else if state == "I".to_string() {
                     transforms.push(Transform::Goto(Go::Start));
-                    mode = Mode::Insert;
+                    mode = Mode::Insert(false);
                     state = "".to_string();
                 } else if state == "i".to_string() {
-                    mode = Mode::Insert;
+                    mode = Mode::Insert(false);
                     state = "".to_string();
                 } else if state == "a".to_string() {
-                    transforms.push(Transform::Goto(Go::Right));
-                    mode = Mode::Insert;
+                    mode = Mode::Insert(true);
                     state = "".to_string();
                 } else if state == "l".to_string() {
                     transforms.push(Transform::Goto(Go::Right));
@@ -130,5 +131,18 @@ pub fn parse_transforms(transformation: &String) -> Vec<Transform> {
             }
         }
     }
+
+    // flush
+    match mode {
+        Mode::Insert(p) => {
+            if p {
+                transforms.push(Transform::InsertRight(state.to_string()));
+            } else {
+                transforms.push(Transform::Insert(state.to_string()));
+            }
+        }
+        _ => {}
+    }
+
     return transforms;
 }
