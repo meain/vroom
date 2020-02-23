@@ -37,7 +37,6 @@ pub fn parse_transforms(transformation: &String) -> Vec<Transform> {
     let mut mode: Mode = Mode::Normal;
     for item in transformation.chars() {
         state = state + &item.to_string();
-        // println!("state: {:?}", state);
 
         match mode {
             Mode::Insert => {

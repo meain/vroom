@@ -1,5 +1,5 @@
-use std::io;
 use std::fs::File;
+use std::io;
 use std::io::{BufRead, BufReader};
 use std::{env, process};
 
@@ -107,6 +107,9 @@ mod tests {
             ["hello world", "ra", "aello world"],
             ["hello world", "llra", "healo world"],
             ["hello world", "llrarbhrc", "hcblo world"],
+            // buggy
+            ["lemon", "wa pie", "lemon pie"],
+            ["lemon", "A pie<esc>biand ", "lemon and pie"],
         ];
 
         for check in checks.iter() {
