@@ -32,7 +32,8 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use crate::{parser::parse_transforms, transform};
+    use crate::parser;
+    use crate::transform;
 
     #[test]
     fn check_replacements() {
@@ -89,7 +90,7 @@ mod tests {
         for check in checks.iter() {
             let line = check[0].to_string();
             let transforms = parser::parse_transforms(&check[1].to_string());
-            let modified = transform(&transforms, line);
+            let modified = transform::transform(&transforms, line);
             assert_eq!(modified, check[2])
         }
     }
