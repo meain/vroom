@@ -3,7 +3,7 @@ use std::io::{BufRead, BufReader};
 use std::{env, process};
 
 // TODO: g_, c, R, gu, gU, ;(repeat), visual mode, copy, paste, search, number repeat
-// TODO: <c-a> and <c-x> to increment numbers
+// TODO: <c-a> and <c-x> to increment numbers, repeat with .
 // TODO: maybe add multiline support
 
 mod parser;
