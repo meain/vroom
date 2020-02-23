@@ -2,7 +2,8 @@ use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-// TODO: g_, c, r, gu, gU, ;(repeat), visual mode, copy, paste, search, number repeat
+// TODO: g_, c, R, gu, gU, ;(repeat), visual mode, copy, paste, search, number repeat
+// TODO: <c-a> and <c-x> to increment numbers
 // TODO: maybe add multiline support
 
 #[derive(Debug, Clone)]
@@ -29,6 +30,7 @@ enum Go {
     Till(char),
     TillBack(char),
     FirstNonSpace,
+    ReplaceChar(char),
 }
 
 #[derive(Debug, Clone)]
@@ -75,7 +77,7 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
             }
             Mode::Normal => {
                 let first_char = state.chars().next().unwrap();
-                if ['f', 'F', 't', 'T'].contains(&first_char) {
+                if ['f', 'F', 't', 'T', 'r'].contains(&first_char) {
                     if state.len() == 1 {
                         continue;
                     } else {
@@ -85,6 +87,7 @@ fn parse_transforms(transformation: &String) -> Vec<Transform> {
                             'F' => transforms.push(Transform::Goto(Go::FindBack(second_char))),
                             't' => transforms.push(Transform::Goto(Go::Till(second_char))),
                             'T' => transforms.push(Transform::Goto(Go::TillBack(second_char))),
+                            'r' => transforms.push(Transform::Goto(Go::ReplaceChar(second_char))),
                             _ => {}
                         }
                         state = "".to_string()
@@ -274,6 +277,10 @@ fn transform(transforms: &Vec<Transform>, line: String) -> String {
                 Go::Till(c) => pos = find_char(&line, c, pos, true),
                 Go::TillBack(c) => pos = find_char_rev(&line, c, pos, true),
                 Go::FirstNonSpace => pos = find_first_non_whitespace(&line),
+                Go::ReplaceChar(c) => {
+                    modified.insert_str(pos, &c.to_string());
+                    modified.remove(pos + 1);
+                }
             },
         }
     }
@@ -350,6 +357,10 @@ mod tests {
             ["hello world", "^ia", "ahello world"],
             ["    hello world", "^ia", "    ahello world"],
             ["    hello world", "0ia", "a    hello world"],
+            // r
+            ["hello world", "ra", "aello world"],
+            ["hello world", "llra", "healo world"],
+            ["hello world", "llrarbhrc", "hcblo world"],
         ];
 
         for check in checks.iter() {
