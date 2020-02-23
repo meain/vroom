@@ -16,7 +16,7 @@ pub fn transform(transforms: &Vec<Transform>, line: String) -> String {
     let mut modified = line.clone();
 
     for transform in transforms {
-        debug(&modified, pos, &transform);
+        // debug(&modified, pos, &transform);
         match transform {
             Transform::Insert(text) => {
                 modified.insert_str(pos, text);
