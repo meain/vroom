@@ -12,14 +12,14 @@ mod utils;
 
 fn main() {
     let args: Vec<_> = env::args().collect();
-    if args.len() < 2 {
-        eprintln!("Usage: {} <transformation>", args[0]);
+    if args.len() < 3 {
+        eprintln!("Usage: {} <transformation> <filename>", args[0]);
         process::exit(1);
     }
 
     let transformation = args[1].clone();
 
-    let file = File::open("test").unwrap();
+    let file = File::open(args[2].clone()).unwrap();
     let reader = BufReader::new(file);
 
     let transforms = parser::parse_transforms(&transformation);
