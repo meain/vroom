@@ -1,3 +1,4 @@
+use std::io;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::{env, process};
@@ -19,14 +20,35 @@ fn main() {
 
     let transformation = args[1].clone();
 
-    let file = File::open(args[2].clone()).unwrap();
-    let reader = BufReader::new(file);
-
     let transforms = parser::parse_transforms(&transformation);
-    for (_, line) in reader.lines().enumerate() {
-        let line = line.unwrap();
-        let modified = transform::transform(&transforms, line);
-        println!("{}", modified);
+
+    if args[2] != "-" {
+        let file = File::open(args[2].clone()).unwrap();
+        let reader = BufReader::new(file);
+        for (_, line) in reader.lines().enumerate() {
+            let line = line.unwrap();
+            let modified = transform::transform(&transforms, line);
+            println!("{}", modified);
+        }
+    } else {
+        let stdin = io::stdin();
+        let mut has_next = true;
+        let mut line = String::new();
+        while has_next {
+            match stdin.read_line(&mut line) {
+                Ok(bytes) if bytes > 0 => {
+                    line.pop();
+                    let modified = transform::transform(&transforms, line.clone());
+                    println!("{}", modified);
+                    line.clear();
+                    has_next = true;
+                }
+                Ok(_) => {
+                    has_next = false;
+                }
+                Err(err) => return eprintln!("Error while reading stream. {}", err),
+            }
+        }
     }
 }
 

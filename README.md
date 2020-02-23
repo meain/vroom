@@ -7,6 +7,7 @@ Run VIM macros over multiple lines.
 ```
 vroom 'pattern' filename
 ```
+ *Use `-` for filename to read from stdin*
 
 <table>
 <tr>
