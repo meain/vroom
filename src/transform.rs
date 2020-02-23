@@ -1,5 +1,6 @@
 use super::parser::{Go, Transform};
 use super::utils;
+use std::env;
 
 #[allow(dead_code)]
 fn debug(line: &str, pos: usize, transform: &Transform) {
@@ -15,8 +16,13 @@ pub fn transform(transforms: &Vec<Transform>, line: String) -> String {
     let mut pos: usize = 0;
     let mut modified = line.clone();
 
+    let enable_debug = !env::var("VROOM_DEBUG").is_err();
+
     for transform in transforms {
-        // debug(&modified, pos, &transform);
+        if enable_debug {
+            debug(&modified, pos, &transform);
+        }
+
         match transform {
             Transform::Insert(text) => {
                 modified.insert_str(pos, text);
