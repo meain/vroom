@@ -47,3 +47,17 @@ Wpple
 </pre></td>
 </tr>
 </table>
+
+
+## Note
+
+This is just me learning some rust. Vim actually lets you do something similar.
+Checkout `vim -es`
+
+```
+vim -es test << EOF
+%norm A juice
+%norm I-
+wq
+EOF
+```
