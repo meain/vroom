@@ -12,7 +12,7 @@ vroom 'pattern' filename
 <table>
 <tr>
 <th><code>cat list</code></th>
-<th><code>vroom 'A juice<esc>I- ' list</code></th>
+<th><code>vroom 'A juice&lt;esc&gt;I- ' list</code></th>
 <th><code>vroom '$a pie,' list</code></th>
 <th><code>vroom '0rW' list</code></th>
 </tr>
