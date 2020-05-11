@@ -2,6 +2,10 @@
 name = "vroom"
 version = "0.1.0"
 authors = ["Abin Simon <abinsimon10@gmail.com>"]
+description ="Vim macros from the shell"
+license ="Apache-2.0"
+homepage = "https://github.com/meain/vroom"
+repository = "https://github.com/meain/vroom"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
